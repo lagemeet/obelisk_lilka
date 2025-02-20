@@ -1,8 +1,8 @@
 lilka.show_fps = true
 position_of_cube = 241
-local direction = 1 
-local min_value = 240
-local max_value = 320
+local direction = 5 
+local min_value = 30
+local max_value = 90
 
 function lilka.update(delta)
     state = controller.get_state()
@@ -16,52 +16,46 @@ function lilka.update(delta)
     end
 end
 
-function display_cube(size,display_x,display_y,color)
 
-    local square_cords = {
-    {0-size,0-size},
-    {size,0-size,},
-    {size,size},
-    {0-size,size},
-    {0-size,0-size}
+
+
+function display_cube(L, W, H, display_x, display_y,color)
+    local function to_isometric(x, y, z)
+        local x_i = x - y
+        local y_i = (z / 2) + (x + y) / 2
+        return x_i, y_i
+    end
+    local vertices = {
+        {0, 0, 0},
+        {L, 0, 0},
+        {L, W, 0},
+        {0, W, 0},
+        {0, 0, H},
+        {L, 0, H},
+        {L, W, H},
+        {0, W, H}
     }
-    local iso_square = {}
-    function to_isometric(point)
-        local x, y = point[1], point[2]
-        local iso_x = x - y
-        local iso_y = (x + y) / 2
-        return {iso_x, iso_y}
-    end
-
-    for i, point in ipairs(square_cords) do
-        iso_square[i] = to_isometric(point)
-    end
-
-    transformed_points = {}
-    for i = 1, #iso_square - 1 do
-        local p1 = iso_square[i]
-        local p2 = iso_square[i + 1]
     
-        local x1, y1 = display_x/2 + p1[1], display_y/2 + p1[2]
-        local x2, y2 = display_x/2 + p2[1], display_y/2 + p2[2]
-
-        table.insert(transformed_points, {x1, y1, x2, y2})
+    local projected_vertices = {}
+    for i, v in ipairs(vertices) do
+        local x_i, y_i = to_isometric(v[1], v[2], v[3])
+        table.insert(projected_vertices, {x_i, y_i})
     end
-    for i, point in ipairs(transformed_points) do
-        display.draw_line(point[1],point[2],point[3],point[4],color)
-        if(i > 1) then
-            display.draw_line(point[1],point[2],point[1],point[2]+10,color);
-            
-        end
-        if(i < 4)then
-            if(i > 1) then
-                display.draw_line(point[1],point[2]+10,point[3],point[4]+10,color)
 
-            end
-        end
-        
+    local edges = {
+        {1, 2}, {2, 3}, {3, 4}, {4, 1},  -- Bottom 
+        {5, 6}, {6, 7}, {7, 8}, {8, 5},  -- Top 
+        {1, 5}, {2, 6}, {3, 7}, {4, 8}   -- Vertical
+    }
+
+    for _, edge in ipairs(edges) do
+        local x1, y1 = display_x/2 + projected_vertices[edge[1]][1], display_y/2 + projected_vertices[edge[1]][2]
+        local x2, y2 = display_x/2 + projected_vertices[edge[2]][1], display_y/2 + projected_vertices[edge[2]][2]
+        display.draw_line(x1, y1, x2, y2, color)  
     end
 end
+
+
 
 function display_stock_cube(size,display_x,display_y,color)
 
@@ -111,12 +105,11 @@ end
 
 function lilka.draw()   
     display.fill_screen(display.color565(0, 0, 0))
-    display_stock_cube(20,280,420,display.color565(0, 255, 0))
-    display_stock_cube(20,280,400,display.color565(0, 255, 255))
-    display_cube(20,280,380,display.color565(255, 0, 0))
-    
-    display_cube(20,5,position_of_cube,360,display.color565(255, 255, 255))
-
+    display_cube(40,40,20,280,380,display.color565(0, 255, 0))
+    display_cube(40,40,20,280,400,display.color565(255, 255, 0))
+    display_cube(40,40,20,position_of_cube,330,display.color565(255, 0, 0))
+    --function display_cube(L, W, H, display_x, display_y,color)
+    display_cube(position_of_cube,40,position_of_cube,280,100,display.color565(255,255,255))
 
     if state.a.pressed then
         util.exit()
